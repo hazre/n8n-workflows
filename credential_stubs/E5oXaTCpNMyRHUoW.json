@@ -1,0 +1,24 @@
+{
+  "id": "E5oXaTCpNMyRHUoW",
+  "name": "Spotify account",
+  "type": "spotifyOAuth2Api",
+  "data": {
+    "grantType": "",
+    "authUrl": "",
+    "accessTokenUrl": "",
+    "clientId": "",
+    "clientSecret": "",
+    "scope": "",
+    "authQueryParameters": "",
+    "authentication": "",
+    "oauthTokenData": {
+      "access_token": "",
+      "token_type": "",
+      "expires_in": 3600,
+      "refresh_token": "",
+      "scope": ""
+    },
+    "server": ""
+  },
+  "nodesAccess": []
+}

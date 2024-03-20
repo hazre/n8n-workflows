@@ -1,0 +1,570 @@
+{
+  "id": "AA9EThUaADl4qifj",
+  "name": "Add liked songs to a Spotify monthly playlist",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"playlistId\"]}}",
+              "operation": "notEqual",
+              "value2": "=null"
+            }
+          ]
+        }
+      },
+      "name": "IF",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        260,
+        610
+      ],
+      "typeVersion": 1,
+      "id": "a3df5543-6be3-4e2b-80fa-47e14393cc8a"
+    },
+    {
+      "parameters": {
+        "functionCode": "const date = new Date()\nconst year = date.getFullYear()\nconst month = date.getMonth()\nconst month2 = (month + 1).toString().padStart(2, '0')\n\nlet currentDate = {\n  month: month,\n  year: year,\n  text: `${year.toString().slice(-2)}${month2}`\n}\n\nitems[0].json.currentDate = currentDate\n\nreturn items\n"
+      },
+      "name": "Get current date",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        -340,
+        810
+      ],
+      "typeVersion": 1,
+      "id": "2bdf8828-e692-43e7-9fce-4037fc6d2c0e"
+    },
+    {
+      "parameters": {
+        "resource": "library"
+      },
+      "name": "Get liked tracks",
+      "type": "n8n-nodes-base.spotify",
+      "position": [
+        -340,
+        980
+      ],
+      "typeVersion": 1,
+      "id": "481af89e-5bf4-49f1-9324-41e974d9fe88",
+      "credentials": {
+        "spotifyOAuth2Api": {
+          "id": "E5oXaTCpNMyRHUoW",
+          "name": "Spotify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "playlist",
+        "operation": "getUserPlaylists",
+        "returnAll": true
+      },
+      "name": "Get playlists",
+      "type": "n8n-nodes-base.spotify",
+      "position": [
+        -340,
+        610
+      ],
+      "typeVersion": 1,
+      "id": "20331d91-40e8-430d-8a80-57c9f55f7c57",
+      "credentials": {
+        "spotifyOAuth2Api": {
+          "id": "E5oXaTCpNMyRHUoW",
+          "name": "Spotify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "multiplex"
+      },
+      "name": "Merge liked tracks",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        -140,
+        910
+      ],
+      "typeVersion": 1,
+      "id": "cd77fb65-ab0a-48dd-80ee-e1b3b05ff7b6"
+    },
+    {
+      "parameters": {
+        "mode": "multiplex"
+      },
+      "name": "Merge playlists",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        -140,
+        610
+      ],
+      "typeVersion": 1,
+      "id": "415a89e2-b7cc-4ea6-8e88-84ad05f62dc3"
+    },
+    {
+      "parameters": {
+        "resource": "playlist",
+        "operation": "create",
+        "name": "={{$node[\"Get current date\"].json[\"currentDate\"][\"text\"]}}",
+        "additionalFields": {
+          "description": "",
+          "public": true
+        }
+      },
+      "name": "Create playlist",
+      "type": "n8n-nodes-base.spotify",
+      "position": [
+        460,
+        710
+      ],
+      "typeVersion": 1,
+      "id": "81adb6a0-4c6a-4f76-ab20-78da773daa18",
+      "credentials": {
+        "spotifyOAuth2Api": {
+          "id": "E5oXaTCpNMyRHUoW",
+          "name": "Spotify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "output= [{ json: {playlistId: items[0].json.id} }]\nreturn output\n\n\n/*return items.map(item => {\n  let playlistName = item.json.name\n  if (item.json.currentDate.text === playlistName) {\n    return {json: {id: item.json.id}}\n  }\n})*/\n"
+      },
+      "name": "Get created playlist ID",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        610,
+        710
+      ],
+      "typeVersion": 1,
+      "id": "245e81d2-d192-411b-aec0-6972ee2cdcb0"
+    },
+    {
+      "parameters": {
+        "functionCode": "let playlistId\nlet playlist = items.find(item => item.json.name === item.json.currentDate.text)\n\nif (playlist === undefined) playlistId = \"null\"\nelse playlistId = playlist.json.id\n\noutput= [{ json: {playlistId: playlistId} }]\nreturn output\n\n\n/*return items.map(item => {\n  let playlistName = item.json.name\n  if (item.json.currentDate.text === playlistName) {\n    return {json: {id: item.json.id}}\n  }\n})*/\n"
+      },
+      "name": "Get playlist ID",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        60,
+        610
+      ],
+      "typeVersion": 1,
+      "id": "2c10e4ad-42f4-49f5-bc94-f973f69bd097"
+    },
+    {
+      "parameters": {
+        "functionCode": "return items.filter(item => {\n  let date = new Date(item.json.added_at)\n  let currentMonth = date.getMonth()\n  let currentYear = date.getFullYear()\n  if (item.json.currentDate.month === currentMonth && item.json.currentDate.year === currentYear) {\n    return {json: item.json}\n  }\n})"
+      },
+      "name": "Get last liked tracks",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        60,
+        910
+      ],
+      "typeVersion": 1,
+      "id": "5a1198fb-45d4-4b2e-99e7-c1c3c610c468"
+    },
+    {
+      "parameters": {
+        "mode": "multiplex"
+      },
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        760,
+        910
+      ],
+      "typeVersion": 1,
+      "id": "4ac30461-8ccf-46ce-b4f1-64e09bbac805"
+    },
+    {
+      "parameters": {},
+      "name": "Merge1",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        660,
+        560
+      ],
+      "typeVersion": 1,
+      "id": "38c0948e-1fcd-49dc-b317-c7e634e939eb"
+    },
+    {
+      "parameters": {
+        "resource": "playlist",
+        "operation": "getTracks",
+        "id": "={{$json[\"playlistId\"]}}",
+        "returnAll": true
+      },
+      "name": "Get tracks in playlist",
+      "type": "n8n-nodes-base.spotify",
+      "position": [
+        460,
+        460
+      ],
+      "typeVersion": 1,
+      "id": "7784b6b3-dd1b-4f2f-9be7-974e6247fcc0",
+      "credentials": {
+        "spotifyOAuth2Api": {
+          "id": "E5oXaTCpNMyRHUoW",
+          "name": "Spotify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"result\"]}}",
+              "value2": "null"
+            }
+          ]
+        }
+      },
+      "name": "IF1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        960,
+        560
+      ],
+      "typeVersion": 1,
+      "id": "f116e1f3-38a6-4ed4-8240-9428edebec2e"
+    },
+    {
+      "parameters": {},
+      "name": "NoOp",
+      "type": "n8n-nodes-base.noOp",
+      "position": [
+        1160,
+        560
+      ],
+      "typeVersion": 1,
+      "id": "7e20f508-e18c-4fd2-aeaa-b269b53e8bd0"
+    },
+    {
+      "parameters": {
+        "mode": "multiplex"
+      },
+      "name": "Merge2",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        1080,
+        720
+      ],
+      "typeVersion": 1,
+      "id": "657e6417-731b-4fe8-b8b2-f1784409158b"
+    },
+    {
+      "parameters": {
+        "resource": "playlist",
+        "id": "={{$json[\"playlistId\"]}}",
+        "trackID": "={{$json[\"track\"][\"uri\"]}}",
+        "additionalFields": {}
+      },
+      "name": "Add to created playlist",
+      "type": "n8n-nodes-base.spotify",
+      "position": [
+        910,
+        910
+      ],
+      "typeVersion": 1,
+      "id": "782b664b-e522-441b-b24b-0b4b469570dc",
+      "credentials": {
+        "spotifyOAuth2Api": {
+          "id": "E5oXaTCpNMyRHUoW",
+          "name": "Spotify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "let result\nlet output= []\nlet tracks = items;\nlet tracksUri = tracks.map(track => track.json.track.uri)\n\nlet newTracks = tracksUri.filter(uri=> {\n  return tracksUri.indexOf(uri) === tracksUri.lastIndexOf(uri)\n});\n\nif (newTracks.length === 0) output.push({json: {result: \"null\"}})\nelse {\n  newTracks.forEach(uri=> {\n    output.push({json: {uri: uri}})\n  })\n}\n//else result = newTracks.map(track => ({uri: track}))\n\nreturn output\n\n\n\n"
+      },
+      "name": "Get new track URI",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        810,
+        560
+      ],
+      "typeVersion": 1,
+      "id": "9dfa4cf3-3f03-4004-8d7b-47aa3858c711"
+    },
+    {
+      "parameters": {
+        "resource": "playlist",
+        "id": "={{$json[\"playlistId\"]}}",
+        "trackID": "={{$json[\"uri\"]}}",
+        "additionalFields": {}
+      },
+      "name": "Add to playlist",
+      "type": "n8n-nodes-base.spotify",
+      "position": [
+        1260,
+        710
+      ],
+      "typeVersion": 1,
+      "id": "c23c045c-68b3-43f5-8982-e16c153d19ec",
+      "credentials": {
+        "spotifyOAuth2Api": {
+          "id": "E5oXaTCpNMyRHUoW",
+          "name": "Spotify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "id": "93064a77-b0fd-4bf6-a2af-c783fe8b13c2",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -580,
+        800
+      ]
+    }
+  ],
+  "connections": {
+    "IF": {
+      "main": [
+        [
+          {
+            "node": "Get tracks in playlist",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create playlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF1": {
+      "main": [
+        [
+          {
+            "node": "NoOp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Add to created playlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Get new track URI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Add to playlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get playlists": {
+      "main": [
+        [
+          {
+            "node": "Merge playlists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create playlist": {
+      "main": [
+        [
+          {
+            "node": "Get created playlist ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get playlist ID": {
+      "main": [
+        [
+          {
+            "node": "IF",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge playlists": {
+      "main": [
+        [
+          {
+            "node": "Get playlist ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get current date": {
+      "main": [
+        [
+          {
+            "node": "Merge liked tracks",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge playlists",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get liked tracks": {
+      "main": [
+        [
+          {
+            "node": "Merge liked tracks",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get new track URI": {
+      "main": [
+        [
+          {
+            "node": "IF1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge liked tracks": {
+      "main": [
+        [
+          {
+            "node": "Get last liked tracks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get last liked tracks": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get tracks in playlist": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get created playlist ID": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get playlists",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get current date",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get liked tracks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "triggerCount": 1,
+  "versionId": "53c35bfc-66c2-4d53-9e2d-136bfeb1dd7d",
+  "owner": "hazrrey@gmail.com"
+}

@@ -1,0 +1,320 @@
+{
+  "id": "ARCgwanDjrjAW1UM",
+  "name": "Spotify Remove Liked from Playlist (#LATER)",
+  "nodes": [
+    {
+      "parameters": {
+        "batchSize": 30,
+        "options": {}
+      },
+      "id": "f05399a2-8517-4448-bb02-dedeb3947644",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1320,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.spotify.com/v1/me/tracks/contains",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "spotifyOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ids",
+              "value": "={{ $json.ids }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "14d73e6c-47fa-44c0-95aa-88372a114f19",
+      "name": "Check User's Saved Tracks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1800,
+        160
+      ],
+      "credentials": {
+        "spotifyOAuth2Api": {
+          "id": "E5oXaTCpNMyRHUoW",
+          "name": "Spotify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "a7e7c2b7-86d9-4ebf-a4aa-7c4f4e599b81",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        2280,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "let idsArray = $input.all().map(item => item.json.track.id).join();\n\nreturn {\n  ids: idsArray\n};"
+      },
+      "id": "64fa8219-9018-4de3-be7d-d37961f947e5",
+      "name": "Turn list to string of ids",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1580,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "let list = [];\n// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  list.push({\n  liked: item.json\n  })\n}\n\nreturn list;"
+      },
+      "id": "b3525fb0-e48f-4ea6-bcee-d61b16ac7e85",
+      "name": "turn it into array of objects",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2020,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "let newlist = [];\n// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  if (item.json.liked) {\n    newlist.push(item.json);\n  }\n};\n\nreturn newlist;"
+      },
+      "id": "962d8cb0-5499-449e-ba65-143a50333866",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1580,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "playlist",
+        "operation": "getTracks",
+        "id": "={{ $vars.spotify_later_playlist }}",
+        "returnAll": true
+      },
+      "id": "9c6a011b-2af7-43bf-a504-e21d3979e98e",
+      "name": "Spotify2",
+      "type": "n8n-nodes-base.spotify",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        260
+      ],
+      "credentials": {
+        "spotifyOAuth2Api": {
+          "id": "E5oXaTCpNMyRHUoW",
+          "name": "Spotify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "track.uri",
+        "options": {
+          "destinationFieldName": "uri"
+        }
+      },
+      "id": "64621c83-0421-44d8-9f1a-00be7b1a2fce",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1800,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://api.spotify.com/v1/playlists/{{ $vars.spotify_later_playlist.split(':')[2] }}/tracks",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "spotifyOAuth2Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "tracks",
+              "value": "={{ $input.all().map((item)=> item.json) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "638828dd-4912-4571-bb23-512f79725617",
+      "name": "Remove Playlist Tracks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2020,
+        -20
+      ],
+      "credentials": {
+        "spotifyOAuth2Api": {
+          "id": "E5oXaTCpNMyRHUoW",
+          "name": "Spotify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      },
+      "id": "6c4c636d-5065-4fb3-84b4-b340317939c9",
+      "name": "Every 10 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        820,
+        260
+      ]
+    }
+  ],
+  "connections": {
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Turn list to string of ids",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Check User's Saved Tracks": {
+      "main": [
+        [
+          {
+            "node": "turn it into array of objects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Turn list to string of ids": {
+      "main": [
+        [
+          {
+            "node": "Check User's Saved Tracks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "turn it into array of objects": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Spotify2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Remove Playlist Tracks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 10 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Spotify2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "triggerCount": 1,
+  "versionId": "901167e1-e689-40d4-86d9-fb8a8c9d06f8",
+  "owner": "hazrrey@gmail.com"
+}
