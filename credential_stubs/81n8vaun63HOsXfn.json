@@ -1,0 +1,13 @@
+{
+  "id": "81n8vaun63HOsXfn",
+  "name": "Query Auth account",
+  "type": "httpQueryAuth",
+  "data": {
+    "name": "",
+    "value": ""
+  },
+  "ownedBy": {
+    "type": "personal",
+    "personalEmail": "hazrrey@gmail.com"
+  }
+}

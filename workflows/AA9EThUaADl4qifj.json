@@ -31,7 +31,7 @@
       "type": "n8n-nodes-base.function",
       "position": [
         -340,
-        810
+        820
       ],
       "typeVersion": 1,
       "id": "2bdf8828-e692-43e7-9fce-4037fc6d2c0e"
@@ -142,7 +142,7 @@
     },
     {
       "parameters": {
-        "functionCode": "let playlistId\nlet playlist = items.find(item => item.json.name === item.json.currentDate.text)\n\nif (playlist === undefined) playlistId = \"null\"\nelse playlistId = playlist.json.id\n\noutput= [{ json: {playlistId: playlistId} }]\nreturn output\n\n\n/*return items.map(item => {\n  let playlistName = item.json.name\n  if (item.json.currentDate.text === playlistName) {\n    return {json: {id: item.json.id}}\n  }\n})*/\n"
+        "functionCode": "let playlistId\nlet playlist = items.filter(item => item.json.name === item.json.currentDate.text)\n\nif (playlist[0] === undefined) playlistId = \"null\"\nelse playlistId = playlist[0].json.id\n\noutput= [{ json: {playlistId: playlistId} }]\nreturn output"
       },
       "name": "Get playlist ID",
       "type": "n8n-nodes-base.function",
@@ -565,6 +565,9 @@
     "executionOrder": "v1"
   },
   "triggerCount": 1,
-  "versionId": "53c35bfc-66c2-4d53-9e2d-136bfeb1dd7d",
-  "owner": "hazrrey@gmail.com"
+  "versionId": "62662138-61e9-4716-bf22-884160ac2381",
+  "owner": {
+    "type": "personal",
+    "personalEmail": "hazrrey@gmail.com"
+  }
 }

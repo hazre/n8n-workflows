@@ -1,0 +1,12 @@
+{
+  "id": "OC34IVwFYPpTfDJd",
+  "name": "Custom Auth account",
+  "type": "httpCustomAuth",
+  "data": {
+    "json": ""
+  },
+  "ownedBy": {
+    "type": "personal",
+    "personalEmail": "hazrrey@gmail.com"
+  }
+}
